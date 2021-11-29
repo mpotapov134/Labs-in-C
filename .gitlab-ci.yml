@@ -66,6 +66,11 @@ lab1-1:
   extends: .master_test
   variables:
     LAB: lab1-1
+    
+lab1-2:
+  extends: .master_test
+  variables:
+    LAB: lab1-2
 
 lab2:
   extends: .master_test
