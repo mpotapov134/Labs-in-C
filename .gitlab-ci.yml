@@ -121,3 +121,8 @@ lab9:
   extends: .master_test
   variables:
     LAB: lab9
+
+lab10:
+  extends: .master_test
+  variables:
+    LAB: lab10
