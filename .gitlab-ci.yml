@@ -97,10 +97,15 @@ lab5:
   variables:
     LAB: lab5
 
-lab6:
+lab6-0:
   extends: .master_test
   variables:
-    LAB: lab6
+    LAB: lab6-0
+
+lab6-1:
+  extends: .master_test
+  variables:
+    LAB: lab6-1
 
 lab7:
   extends: .master_test
