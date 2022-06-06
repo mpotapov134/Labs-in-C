@@ -107,6 +107,11 @@ lab6-1:
   variables:
     LAB: lab6-1
 
+lab6-2:
+  extends: .master_test
+  variables:
+    LAB: lab6-2
+
 lab7:
   extends: .master_test
   variables:
