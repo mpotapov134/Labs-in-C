@@ -52,6 +52,11 @@ on_branch:
     refs:
       - master
 
+lab-begin:
+  extends: .master_test
+  variables:
+    LAB: lab-begin
+
 lab0:
   extends: .master_test
   variables:
