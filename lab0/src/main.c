@@ -11,7 +11,7 @@ void bad_input(void) {
 
 
 int value(int digit) {
-    int result;
+    int result = 0;
     if ('0' <= digit && digit <= '9') {
         result = digit - '0';
     }
