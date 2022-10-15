@@ -68,8 +68,8 @@ void to_internal(char b1_number[13], long long *res_internal) {
         ++i;
     }
     ++i;
-    for (i; i < strlen(b1_number); ++i) {
-        numerator = numerator * base1 + value(b1_number[i]);
+    for (int j = i; j < strlen(b1_number); ++j) {
+        numerator = numerator * base1 + value(b1_number[j]);
         denominator *= base1;
     }
 
@@ -107,7 +107,6 @@ void to_b2(long long *internal_representation) {
             numerator = numerator * base2 - x * denominator;
             b2_fract_part[i] = to_char(x);
         }
-        b2_fract_part[12] = 0;
         printf(".%s", b2_fract_part);
     }
     printf("\n");
@@ -128,6 +127,9 @@ int main(void) {
 
     char b1_number[13];
     int input_number = scanf("%13s", b1_number);
+    if (!input_number) {
+        bad_input();
+    }
 
     long long res_internal[3], *res_internal_pointer = &res_internal[0];
     to_internal(b1_number, res_internal_pointer);
