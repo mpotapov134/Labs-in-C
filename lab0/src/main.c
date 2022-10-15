@@ -63,7 +63,7 @@ void to_internal(char b1_number[14], long long *res_internal) {
     if (b1_number[strlen(b1_number) - 1] == '.' || b1_number[0] == '.') {
         bad_input();
     }
-    while (b1_number[i] != '.' && i < strlen(b1_number)) {
+    while (i < strlen(b1_number) && b1_number[i] != '.') {
         int_part = int_part * base1 + value(b1_number[i]);
         ++i;
     }
@@ -103,7 +103,7 @@ void to_b2(long long *internal_representation) {
     printf("%s", b2_int_part);
 
     if (has_fractional) {
-        char b2_fract_part[12];
+        char b2_fract_part[13];
         for (int i = 0; i < 12; ++i) {
             x = (numerator * base2) / denominator;
             numerator = numerator * base2 - x * denominator;
