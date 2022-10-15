@@ -68,7 +68,8 @@ void to_internal(char b1_number[13], long long *res_internal) {
         ++i;
     }
     ++i;
-    for (int j = i; j < strlen(b1_number); ++j) {
+    // why can't we use i here and have to use another variable?
+    for (unsigned j = i; j < strlen(b1_number); ++j) {
         numerator = numerator * base1 + value(b1_number[j]);
         denominator *= base1;
     }
