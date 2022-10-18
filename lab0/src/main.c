@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int base1, base2, has_fractional = 0;
+int has_fractional = 0;
 
 void bad_input(void) {
     printf("bad input\n");
@@ -10,7 +10,7 @@ void bad_input(void) {
 }
 
 
-int value(int digit) {
+int value(int digit, int b1) {
     int result = 0;
     if ('0' <= digit && digit <= '9') {
         result = digit - '0';
@@ -24,7 +24,7 @@ int value(int digit) {
     else {
         bad_input();
     }
-    if (result >= base1) {
+    if (result >= b1) {
         bad_input();
     }
     return result;
@@ -54,7 +54,7 @@ void reverse(char *string){
 }
 
 
-void to_internal(char b1_number[14], long long *res_internal) {
+void to_internal(char b1_number[14], long long *res_internal, int b1) {
     unsigned i = 0;
     long long int_part = 0, numerator = 0, denominator = 1;
     if (strchr(b1_number, '.')) {
@@ -64,14 +64,13 @@ void to_internal(char b1_number[14], long long *res_internal) {
         bad_input();
     }
     while (i < strlen(b1_number) && b1_number[i] != '.') {
-        int_part = int_part * base1 + value(b1_number[i]);
+        int_part = int_part * b1 + value(b1_number[i], b1);
         ++i;
     }
     ++i;
-    // why can't we use i here and have to use another variable?
     for (unsigned j = i; j < strlen(b1_number); ++j) {
-        numerator = numerator * base1 + value(b1_number[j]);
-        denominator *= base1;
+        numerator = numerator * b1 + value(b1_number[j], b1);
+        denominator *= b1;
     }
 
     res_internal[0] = int_part;
@@ -80,7 +79,7 @@ void to_internal(char b1_number[14], long long *res_internal) {
 }
 
 
-void to_b2(long long *internal_representation) {
+void to_b2(long long *internal_representation, int b2) {
     long long int_part = internal_representation[0],
         numerator = internal_representation[1],
         denominator = internal_representation[2];
@@ -90,8 +89,8 @@ void to_b2(long long *internal_representation) {
 
     b2_int_part[0] = '0';
     while (int_part > 0) {
-        x = int_part % base2;
-        int_part /= base2;
+        x = int_part % b2;
+        int_part /= b2;
         b2_int_part[i] = to_char(x);
         ++i;
     }
@@ -105,10 +104,11 @@ void to_b2(long long *internal_representation) {
     if (has_fractional) {
         char b2_fract_part[13];
         for (int i = 0; i < 12; ++i) {
-            x = (numerator * base2) / denominator;
-            numerator = numerator * base2 - x * denominator;
+            x = (numerator * b2) / denominator;
+            numerator = numerator * b2 - x * denominator;
             b2_fract_part[i] = to_char(x);
         }
+        b2_fract_part[12] = 0;
         printf(".%s", b2_fract_part);
     }
     printf("\n");
@@ -124,18 +124,15 @@ int main(void) {
     if (b1 < 2 || 16 < b1 || b2 < 2 || 16 < b2) {
         bad_input();
     }
-    base1 = b1;
-    base2 = b2;
 
-    // why should it be 'b1_number[14]' and not 'b1_number[13]'?
     char b1_number[14];
     int input_number = scanf("%13s", b1_number);
     if (!input_number) {
         bad_input();
     }
 
-    long long res_internal[3], *res_internal_pointer = &res_internal[0];
-    to_internal(b1_number, res_internal_pointer);
+    long long res_internal[3];
+    to_internal(b1_number, res_internal, b1);
 
-    to_b2(res_internal);
+    to_b2(res_internal, b2);
 }
