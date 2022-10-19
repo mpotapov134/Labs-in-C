@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 
-int has_fractional = 0;
 
 void bad_input(void) {
     printf("bad input\n");
@@ -54,9 +53,10 @@ void reverse(char *string){
 }
 
 
-void to_internal(char b1_number[14], long long *res_internal, int b1) {
+int to_internal(char b1_number[14], long long *res_internal, int b1) {
     unsigned i = 0;
     long long int_part = 0, numerator = 0, denominator = 1;
+    int has_fractional = 0;
     if (strchr(b1_number, '.')) {
         has_fractional = 1;
     }
@@ -76,10 +76,11 @@ void to_internal(char b1_number[14], long long *res_internal, int b1) {
     res_internal[0] = int_part;
     res_internal[1] = numerator;
     res_internal[2] = denominator;
+    return has_fractional;
 }
 
 
-void to_b2(long long *internal_representation, int b2) {
+void to_b2(long long *internal_representation, int b2, int has_fractional) {
     long long int_part = internal_representation[0],
         numerator = internal_representation[1],
         denominator = internal_representation[2];
@@ -132,7 +133,7 @@ int main(void) {
     }
 
     long long res_internal[3];
-    to_internal(b1_number, res_internal, b1);
+    int has_fractional = to_internal(b1_number, res_internal, b1);
 
-    to_b2(res_internal, b2);
+    to_b2(res_internal, b2, has_fractional);
 }
