@@ -77,7 +77,7 @@ void Swap(char *ind1, char *ind2) {
 
 void ReverseTail(char *src, unsigned startPosInd) {
     unsigned length = strlen(src) - startPosInd;
-    for (int i = 0; i < length / 2; ++ i) {
+    for (unsigned i = 0; i < length / 2; ++ i) {
         Swap(&src[startPosInd + i], &src[strlen(src) - i - 1]);
     }
 }
@@ -108,7 +108,7 @@ int main(void) {
         *EolPointer = 0;
     }
     unsigned nPermutations = 0;
-    if (1 != scanf("%i", &nPermutations)) {
+    if (1 != scanf("%u", &nPermutations)) {
         BadInput();
     }
     if (HasRepeats(input)) {
