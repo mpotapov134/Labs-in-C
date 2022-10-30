@@ -1,7 +1,7 @@
 | Lab    | Due    | Score | Reviewed | Comments |
 |--------|--------|-------|----------|----------|
 | lab-begin |     |  -    |          |          |
-| lab0   | Nov  9 |  4    | Oct 18   | comments |
+| lab0   | Nov  9 |  5    | Oct 18,30   |  |
 | lab1-0 | Nov 23 |       |          |          |
 | lab1-1 | Nov 23 |       |          |          |
 | lab1-2 | Nov 23 |       |          |          |
