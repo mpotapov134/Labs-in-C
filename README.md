@@ -5,7 +5,7 @@
 | lab1-0 | Nov 23 |       |          |          |
 | lab1-1 | Nov 23 |       |          |          |
 | lab1-2 | Nov 23 |       |          |          |
-| lab2   | Nov 23 |       |          |          |
+| lab2   | Nov 23 | 4     | Oct 30   |          |
 | lab3-0 | Dec  7 |       |          |          |
 | lab3-1 | Dec  7 |       |          |          |
 | lab4   | Dec 21 |       |          |          |
