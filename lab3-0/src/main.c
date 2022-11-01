@@ -68,7 +68,7 @@ void HeapSort(int *array, unsigned arrayLen) {
 
 int main(void) {
     unsigned arrayLen = 0;
-    if (! scanf("%i", &arrayLen)) {
+    if (! scanf("%u", &arrayLen)) {
         exit(0);
     }
     int *array = (int*) malloc(arrayLen * 4);
@@ -76,7 +76,9 @@ int main(void) {
         exit(0);
     }
     for (unsigned i = 0; i < arrayLen; ++i) {
-        scanf("%i", &array[i]);
+        if (! scanf("%i", &array[i])) {
+            exit(0);
+        }
     }
 
     HeapSort(array, arrayLen);
