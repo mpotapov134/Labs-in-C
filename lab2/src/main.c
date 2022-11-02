@@ -54,7 +54,7 @@ int HasRepeats(char *src) {
 
 
 unsigned FindLastValueLessThanNext(char *src) {
-    unsigned res;
+    unsigned res = 0;
     for (unsigned i = 0; i + 1 < strlen(src); ++i) {
         if (src[i] < src[i + 1]) {
             res = i;
@@ -65,7 +65,7 @@ unsigned FindLastValueLessThanNext(char *src) {
 
 
 unsigned FindGreaterValueWithMaxIndex(char *src, unsigned j) {
-    unsigned res = 1000;
+    unsigned res = 0;
     for (unsigned i = j + 1; i < strlen(src); ++i) {
         if (src[i] > src[j]) {
             res = i;
