@@ -10,7 +10,15 @@ void BadInput() {
 }
 
 
-int Value(int digit) {
+void Swap(char *ind1, char *ind2) {
+    char temp = *ind1;
+    *ind1 = *ind2;
+    *ind2 = temp;
+}
+
+
+int GetValueOrDie(int digit) { /* I could just return the ASCII code of the symbol,
+                                  so that it was possible to use any symbols but then the tests would fail */
     int res = 0;
     if (isdigit(digit)) {
         res = digit - '0';
@@ -32,9 +40,9 @@ int Value(int digit) {
 
 int HasRepeats(char *src) {
     int res = 0;
-    int symbolCounter[100] = {0};
+    int symbolCounter[256] = {0}; // set to 256, so any ASCII symbol could be used
     for (unsigned i = 0; i < strlen(src); ++i) {
-        int currentSymbol = Value(src[i]);
+        int currentSymbol = GetValueOrDie(src[i]);
         if (symbolCounter[currentSymbol] > 0) {
             res = 1;
             break;
@@ -46,8 +54,7 @@ int HasRepeats(char *src) {
 
 
 unsigned FindLastValueLessThanNext(char *src) {
-    unsigned res = 1000; /* special code, in case no fitting index was found, meaning
-                            no permautations are available, e.g. in 54321 */
+    unsigned res;
     for (unsigned i = 0; i + 1 < strlen(src); ++i) {
         if (src[i] < src[i + 1]) {
             res = i;
@@ -68,32 +75,37 @@ unsigned FindGreaterValueWithMaxIndex(char *src, unsigned j) {
 }
 
 
-void Swap(char *ind1, char *ind2) {
-    char temp = *ind1;
-    *ind1 = *ind2;
-    *ind2 = temp;
-}
-
-
-void ReverseTail(char *src, unsigned startPosInd) {
-    unsigned length = strlen(src) - startPosInd;
-    for (unsigned i = 0; i < length / 2; ++ i) {
-        Swap(&src[startPosInd + i], &src[strlen(src) - i - 1]);
+void ReverseTail(char *src) {
+    for (unsigned i = 0; i < strlen(src) / 2; ++ i) {
+        Swap(&src[i], &src[strlen(src) - i - 1]);
     }
 }
 
 
-void GeneratePermutations(char *src, int nPermutations) {
+int CanGeneratePermutations(char *src) {
+    for (unsigned i = 0; i + 1 < strlen(src); ++i) {
+        if (src[i] < src[i + 1]) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+void GenerateNextPermutation(char *src) {
     unsigned indLast = FindLastValueLessThanNext(src);
     unsigned indGreater = FindGreaterValueWithMaxIndex(src, indLast);
-    int permautationsCounter = 0;
-    while (indLast != 1000 && permautationsCounter < nPermutations) {
-        Swap(&src[indLast], &src[indGreater]);
-        ReverseTail(src, indLast + 1);
+    Swap(&src[indLast], &src[indGreater]);
+    ReverseTail(src + indLast + 1);
+}
+
+
+void GeneratePermutations(char *src, int nPermutations) {
+    int permutationsCounter = 0;
+    while (CanGeneratePermutations(src) && permutationsCounter < nPermutations) {
+        GenerateNextPermutation(src);
         printf("%s\n", src);
-        indLast = FindLastValueLessThanNext(src);
-        indGreater = FindGreaterValueWithMaxIndex(src, indLast);
-        ++ permautationsCounter;
+        ++ permutationsCounter;
     }
 }
 
@@ -107,15 +119,17 @@ int main(void) {
     if (EolPointer) {
         *EolPointer = 0;
     }
+
     unsigned nPermutations = 0;
     if (1 != scanf("%u", &nPermutations)) {
         BadInput();
     }
+
     if (HasRepeats(input)) {
         BadInput();
     }
-    GeneratePermutations(input, nPermutations);
 
+    GeneratePermutations(input, nPermutations);
 
     return EXIT_SUCCESS;
 }
