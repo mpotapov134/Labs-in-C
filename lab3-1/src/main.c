@@ -9,8 +9,9 @@ void Swap(int *src, int *dst) {
 }
 
 
-int MakePartition(int *array, int left, int right) {
-    int baseElement = array[(left + right) / 2];
+int MakePartition(int *array, int len) {
+    int baseElement = array[(len - 1) / 2];
+    int left = 0, right = len - 1;
     while (1) {
         while (array[left] < baseElement) {
             left ++;
@@ -26,13 +27,13 @@ int MakePartition(int *array, int left, int right) {
 }
 
 
-void QuickSort(int *array, int left, int right) {
-    if (right - left < 1) {
+void QuickSort(int *array, int len) {
+    if (len <= 1) {
         return;
     }
-    int separationPoint = MakePartition(array, left, right);
-    QuickSort(array, left, separationPoint);
-    QuickSort(array, separationPoint + 1, right);
+    int separationPoint = MakePartition(array, len);
+    QuickSort(array, separationPoint + 1);
+    QuickSort(array + separationPoint + 1, len - separationPoint - 1);
 }
 
 
@@ -50,7 +51,7 @@ int main(void) {
         exit(0);
     }
 
-    int *array = (int *) malloc(arrayLen * 4);
+    int *array = (int *) malloc(arrayLen * sizeof(int));
     if (! array) {
         exit(0);
     }
@@ -61,7 +62,7 @@ int main(void) {
         }
     }
 
-    QuickSort(array, 0, arrayLen - 1);
+    QuickSort(array, arrayLen);
 
     PrintArray(array, arrayLen);
 
