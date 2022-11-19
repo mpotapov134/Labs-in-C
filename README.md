@@ -7,7 +7,7 @@
 | lab1-2 | Nov 23 |       |          |          |
 | lab2   | Nov 23 | 5     | Oct 30, Nov 8,9  |  |
 | lab3-0 (heapsort) | Dec  7 | 5      | Nov 1         |          |
-| lab3-1 (qsort) | Dec  7 | 5  | Nov 14 |       |
+| lab3-1 (qsort) | Dec  7 | 5  | Nov 14,19 |       |
 | lab4   | Dec 21 |       |          |          |
 | lab5   | May 15 |       |          |          |
 | lab6-0 | Feb 26 |       |          |          |
