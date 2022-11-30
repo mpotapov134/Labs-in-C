@@ -1,28 +1,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
 
 
 typedef struct TextClass {
-    char text[17];
-    size_t length;
+    unsigned char text[17];
     size_t shift, checkPos;
 } TextClass;
 
 
 typedef struct SampleClass {
-    char sample[17];
-    size_t length;
-    int shiftTable[UCHAR_MAX + 1];
+    unsigned char sample[17];
+    int shiftTable[256];
 } SampleClass;
 
 
 void IsMatch(TextClass *textEntity, SampleClass *sampleEntity) {
     int counter = 0;
-    for (int i = textEntity->length - 1; i >= 0; --i) {
+    for (unsigned i = strlen(textEntity->text); i > 0; --i) {
         printf("%li ", textEntity->checkPos - counter++);
-        if (textEntity->text[i] != sampleEntity->sample[i]) {
+        if (textEntity->text[i - 1] != sampleEntity->sample[i - 1]) {
             return;
         }
     }
@@ -31,24 +28,23 @@ void IsMatch(TextClass *textEntity, SampleClass *sampleEntity) {
 
 void Proceed(TextClass *textEntity, SampleClass *sampleEntity) {
     char shiftArray[17];
-    textEntity->shift = sampleEntity->shiftTable[(size_t)textEntity->text[textEntity->length - 1]];
+    textEntity->shift = sampleEntity->shiftTable[(size_t)textEntity->text[strlen(textEntity->text) - 1]];
     textEntity->checkPos += textEntity->shift;
     if (fread(shiftArray, sizeof(char), textEntity->shift, stdin) != textEntity->shift) {
         textEntity->text[0] = 0;
-        textEntity->length = 0;
         return;
     }
-    for (unsigned i = 0; i < textEntity->length - textEntity->shift; ++i) {
+    for (unsigned i = 0; i < strlen(textEntity->text) - textEntity->shift; ++i) {
         textEntity->text[i] = textEntity->text[i + textEntity->shift];
     }
-    for (unsigned i = textEntity->length - textEntity->shift; i < textEntity->length; ++i) {
-        textEntity->text[i] = shiftArray[i - (textEntity->length - textEntity->shift)];
+    for (unsigned i = strlen(textEntity->text) - textEntity->shift; i < strlen(textEntity->text); ++i) {
+        textEntity->text[i] = shiftArray[i - (strlen(textEntity->text) - textEntity->shift)];
     }
 }
 
 
 int TextEnded(TextClass *textEntity) {
-    return textEntity->length == 0;
+    return strlen(textEntity->text) == 0;
 }
 
 
@@ -60,7 +56,7 @@ void Search(TextClass *text, SampleClass *sample) {
 }
 
 
-void MakeShiftTable(char *sample, int *resTable) {
+void MakeShiftTable(unsigned char *sample, int *resTable) {
     unsigned sampleLen = strlen(sample);
     for (unsigned i = 0; i + 1 < sampleLen; ++i) {
         resTable[(size_t)sample[i]] = sampleLen - i - 1;
@@ -69,13 +65,13 @@ void MakeShiftTable(char *sample, int *resTable) {
 
 
 int main(void) {
-    char sample[18];
+    unsigned char sample[18];
     if (!fgets(sample, 18, stdin)) {
         exit(0);
     }
     *strchr(sample, '\n') = 0;
 
-    int shiftTable[UCHAR_MAX + 1];
+    int shiftTable[256];
     for (unsigned i = 0; i < 256; ++i) {
         shiftTable[i] = strlen(sample);
     }
@@ -83,17 +79,17 @@ int main(void) {
 
     SampleClass sampleEntity;
     strcpy(sampleEntity.sample, sample);
-    sampleEntity.length = strlen(sample);
-    for (unsigned i = 0; i < UCHAR_MAX + 1; ++i) {
+    for (unsigned i = 0; i < 256; ++i) {
         sampleEntity.shiftTable[i] = shiftTable[i];
     }
 
-    char text[18];
-    if (fread(text, sizeof(char), sampleEntity.length, stdin) != sampleEntity.length) {
+    unsigned char text[18];
+    if (fread(text, sizeof(char), strlen(sample), stdin) != strlen(sample)) {
         exit(0);
     }
+    text[strlen(sample)] = 0;
 
-    TextClass textEntity = {"", sampleEntity.length, 0, sampleEntity.length};
+    TextClass textEntity = {"", 0, strlen(sample)};
     strcpy(textEntity.text, text);
 
     Search(&textEntity, &sampleEntity);
