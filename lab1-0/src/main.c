@@ -18,7 +18,7 @@ typedef struct SampleClass {
 void IsMatch(TextClass *textEntity, SampleClass *sampleEntity) {
     int counter = 0;
     for (unsigned i = strlen((char*)textEntity->text); i > 0; --i) {
-        printf("%li ", textEntity->checkPos - counter++);
+        printf("%zu ", textEntity->checkPos - counter++);
         if (textEntity->text[i - 1] != sampleEntity->sample[i - 1]) {
             return;
         }
