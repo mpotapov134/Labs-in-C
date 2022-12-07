@@ -36,7 +36,7 @@ void CheckMatch(TextClass *textEntity, SampleClass *sampleEntity) {
 void Refill(TextClass *textEntity, SampleClass *sampleEntity) {
     textEntity->checkPos -= textEntity->shift;
     size_t textLen = strlen((char*) textEntity->text);
-    size_t sampleLen strlen((char*) sampleEntity->sample);
+    size_t sampleLen = strlen((char*) sampleEntity->sample);
     size_t tailLen = textLen - textEntity->checkPos; // defines the offset
 
     strcpy((char*) textEntity->text, (char*) textEntity->text + textEntity->checkPos);
