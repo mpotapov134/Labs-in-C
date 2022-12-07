@@ -36,15 +36,16 @@ void CheckMatch(TextClass *textEntity, SampleClass *sampleEntity) {
 void Refill(TextClass *textEntity, SampleClass *sampleEntity) {
     textEntity->checkPos -= textEntity->shift;
     size_t textLen = strlen((char*) textEntity->text);
+    size_t sampleLen strlen((char*) sampleEntity->sample);
     size_t tailLen = textLen - textEntity->checkPos; // defines the offset
 
-    strcpy(textEntity->text, textEntity->text + textEntity->checkPos);
+    strcpy((char*) textEntity->text, (char*) textEntity->text + textEntity->checkPos);
     size_t bitesRead = fread(textEntity->text + tailLen, sizeof(char), BUF_SIZE - tailLen, stdin);
-    if (bitesRead < strlen(sampleEntity->sample)) {
+    if (bitesRead < sampleLen) {
         textEntity->text[0] = 0; // remaining text is shorter than the sample, no need to compare anymore
     }
     textEntity->text[bitesRead] = 0;
-    textEntity->checkPos = strlen((char*) sampleEntity->sample);
+    textEntity->checkPos = sampleLen;
 }
 
 
