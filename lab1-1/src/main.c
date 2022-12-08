@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <locale.h>
-#define BUF_SIZE 20000
+#define BUF_SIZE 100000
 
 
 typedef struct TextClass {
@@ -29,8 +29,8 @@ int CalcHash(char *string, size_t chunkLength) {
 }
 
 
-int CanCheck(TextClass *textEntity) {
-    return textEntity->length != 0;
+int CanCheck(TextClass *textEntity, SampleClass *sampleEntity) {
+    return textEntity->length >= sampleEntity->length;
 }
 
 
@@ -38,7 +38,7 @@ void CheckMatch(TextClass *textEntity, SampleClass *sampleEntity) {
     if (textEntity->hash != sampleEntity->hash) {
         return;
     }
-    for (unsigned i = 0; i < strlen(sampleEntity->sample); ++i) {
+    for (unsigned i = 0; i < sampleEntity->length; ++i) {
         printf("%u ", textEntity->indexGlobal + i);
         if (textEntity->text[textEntity->index - 1 + i] != sampleEntity->sample[i]) {
             return;
@@ -57,7 +57,7 @@ void Refill(TextClass *textEntity, SampleClass *sampleEntity) {
 }
 
 
-void Proceed(TextClass *textEntity, SampleClass *sampleEntity) {
+int Proceed(TextClass *textEntity, SampleClass *sampleEntity) {
     size_t chunkLength = sampleEntity->length;
     textEntity->hash /= 3;
     textEntity->index ++;
@@ -66,23 +66,22 @@ void Proceed(TextClass *textEntity, SampleClass *sampleEntity) {
     int indOfLast = textEntity->index - 1 + chunkLength - 1;
     if (indOfLast >= (int) textEntity->length) {
         Refill(textEntity, sampleEntity);
+        if (!CanCheck(textEntity, sampleEntity)) {
+            return 0;
+        }
         textEntity->index = 1;
         indOfLast = chunkLength - 1;
     }
-    if (textEntity->length >= chunkLength) {
-        textEntity->hash += ((unsigned char) textEntity->text[indOfLast] % 3) * pow(3, chunkLength - 1);
-    }
-    else {
-        textEntity->text[0] = 0; // remaining text is shorter than the sample, no need to compare anymore
-        textEntity->length = 0;
-    }
+    textEntity->hash += ((unsigned char) textEntity->text[indOfLast] % 3) * pow(3, chunkLength - 1);
+    return 1;
 }
 
 
 void Search(TextClass *textEntity, SampleClass *sampleEntity) {
-    while (CanCheck(textEntity)) {
+    int flag = CanCheck(textEntity, sampleEntity);
+    while (flag) {
         CheckMatch(textEntity, sampleEntity);
-        Proceed(textEntity, sampleEntity);
+        flag = Proceed(textEntity, sampleEntity);
     }
 }
 
