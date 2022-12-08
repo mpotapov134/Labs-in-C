@@ -63,7 +63,7 @@ void Proceed(TextClass *textEntity, SampleClass *sampleEntity) {
     textEntity->indexGlobal ++;
 
     int indOfLast = textEntity->index - 1 + chunkLength - 1;
-    if (indOfLast >= textEntity->length) {
+    if (indOfLast >= (int) textEntity->length) {
         Refill(textEntity, sampleEntity);
         textEntity->index = 1;
         indOfLast = chunkLength - 1;
