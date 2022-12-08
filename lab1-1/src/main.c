@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <locale.h>
-#define BUF_SIZE 10000
+#define BUF_SIZE 20000
 
 
 typedef struct TextClass {
@@ -16,6 +16,7 @@ typedef struct TextClass {
 typedef struct SampleClass {
     char sample[17];
     int hash;
+    size_t length;
 } SampleClass;
 
 
@@ -38,7 +39,7 @@ void CheckMatch(TextClass *textEntity, SampleClass *sampleEntity) {
         return;
     }
     for (unsigned i = 0; i < strlen(sampleEntity->sample); ++i) {
-        printf("%i ", textEntity->indexGlobal + i);
+        printf("%u ", textEntity->indexGlobal + i);
         if (textEntity->text[textEntity->index - 1 + i] != sampleEntity->sample[i]) {
             return;
         }
@@ -47,7 +48,7 @@ void CheckMatch(TextClass *textEntity, SampleClass *sampleEntity) {
 
 
 void Refill(TextClass *textEntity, SampleClass *sampleEntity) {
-    size_t chunkLength = strlen(sampleEntity->sample);
+    size_t chunkLength = sampleEntity->length;
     size_t offset = chunkLength - 1;
     memmove(textEntity->text, textEntity->text + textEntity->length - offset, offset);
     size_t bitesRead = fread(textEntity->text + offset, sizeof(char), BUF_SIZE - offset, stdin);
@@ -57,7 +58,7 @@ void Refill(TextClass *textEntity, SampleClass *sampleEntity) {
 
 
 void Proceed(TextClass *textEntity, SampleClass *sampleEntity) {
-    size_t chunkLength = strlen(sampleEntity->sample);
+    size_t chunkLength = sampleEntity->length;
     textEntity->hash /= 3;
     textEntity->index ++;
     textEntity->indexGlobal ++;
@@ -106,7 +107,7 @@ int main(void) {
 
     TextClass textEntity = {"", CalcHash(text, strlen(sample)), 1, 1, bitesRead};
     strcpy(textEntity.text, text);
-    SampleClass sampleEntity = {"", sampleHash};
+    SampleClass sampleEntity = {"", sampleHash, strlen(sample)};
     strcpy(sampleEntity.sample, sample);
 
     Search(&textEntity, &sampleEntity);
