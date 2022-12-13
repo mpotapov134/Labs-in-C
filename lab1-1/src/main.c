@@ -58,11 +58,11 @@ int MoveIfPossible(TextClass *textEntity, SampleClass *sampleEntity) {
     textEntity->indexGlobal ++;
     int indOfLast = textEntity->index - 1 + chunkLength - 1; // index of the last symbol in the text to be compared with the sample
 
-    if (indOfLast >= textEntity->length) { // the buffer is too short to check, need to refill
+    if ((unsigned) indOfLast >= textEntity->length) { // the buffer is too short to check, need to refill
         Refill(textEntity, sampleEntity);
         textEntity->index = 1;
         indOfLast = chunkLength - 1;
-        if (indOfLast >= textEntity->length) {
+        if ((unsigned) indOfLast >= textEntity->length) {
             return 0; // refilling the buffer didn't help, can't proceed anymore
         }
     }
