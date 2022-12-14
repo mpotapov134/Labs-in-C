@@ -8,7 +8,7 @@
 
 typedef struct TextClass {
     char text[BUF_SIZE + 1];
-    int hash, index, indexGlobal;
+    int hash, index, indexGlobal, power;
     size_t length;
 } TextClass;
 
@@ -68,7 +68,7 @@ int MoveIfPossible(TextClass *textEntity, SampleClass *sampleEntity) {
     }
 
     textEntity->hash /= 3;
-    textEntity->hash += ((unsigned char) textEntity->text[indOfLast] % 3) * pow(3, chunkLength - 1);
+    textEntity->hash += ((unsigned char) textEntity->text[indOfLast] % 3) * textEntity->power;
     return 1; // the buffer is still long enough, so we can proceed successfully
 }
 
@@ -98,7 +98,7 @@ int main(void) {
     size_t bytesRead = fread(text, sizeof(char), BUF_SIZE, stdin);
     text[bytesRead] = 0;
 
-    TextClass textEntity = {"", CalcHash(text, sampleLen), 1, 1, bytesRead};
+    TextClass textEntity = {"", CalcHash(text, sampleLen), 1, 1, (int) pow(3, sampleLen - 1), bytesRead};
     strcpy(textEntity.text, text);
     SampleClass sampleEntity = {"", sampleHash, sampleLen};
     strcpy(sampleEntity.sample, sample);
