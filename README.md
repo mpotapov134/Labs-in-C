@@ -3,7 +3,7 @@
 | lab-begin |     |  -    |          |          |
 | lab0   | Nov  9 |  5    | Oct 18,30   |  |
 | lab1-0 | Nov 23 | 5     | Dec 1, 11,15    |          |
-| lab1-1 | Nov 23 |       |          |          |
+| lab1-1 | Nov 23 | 5     | Dec 15   |          |
 | lab1-2 | Nov 23 |       |          |          |
 | lab2   | Nov 23 | 5     | Oct 30, Nov 8,9  |  |
 | lab3-0 (heapsort) | Dec  7 | 5      | Nov 1         |          |
