@@ -20,15 +20,13 @@ int IsOperator(char symbol) {
 
 
 int Priority(char opeation) {
-    if (opeation == '(' || opeation == ')') {
-        return 0;
-    }
     if (opeation == '+' || opeation == '-') {
         return 1;
     }
     if (opeation == '*' || opeation == '/') {
         return 2;
     }
+    return 0; // 0 for brackets
 }
 
 
@@ -65,7 +63,7 @@ int GetTopValue(TStack* stack) {
 
 
 void DeleteStack(TStack* stack) {
-    int placeholder;
+    int placeholder = 0;
     while (stack) {
         placeholder = Pop(&stack);
     }
@@ -160,7 +158,7 @@ int* Calculate(char* backwardsPolish, int* numbersArray) {
     TStack* numStack = NULL;
     char symbol;
     int indexOfLast = 0, a, b, res;
-    int* finalRes = NULL;
+    int* finalRes = (int*) malloc(sizeof(int));
 
     for (unsigned i = 0; i < strlen(backwardsPolish); ++i) {
         symbol = backwardsPolish[i];
@@ -201,7 +199,7 @@ int* Calculate(char* backwardsPolish, int* numbersArray) {
         }
     }
     res = Pop(&numStack);
-    finalRes = &res;
+    *finalRes = res;
     return finalRes;
 }
 
@@ -228,6 +226,7 @@ int main(void) {
     if (result) {
         printf("%i\n", *result);
     }
+    free(result);
     free(numbersArray);
     free(backwardsPolish);
 }
