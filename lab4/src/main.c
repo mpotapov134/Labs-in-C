@@ -67,6 +67,9 @@ void DeleteStack(TStack* stack) {
     while (stack) {
         placeholder = Pop(&stack);
     }
+    if (placeholder) { // gitlab punishes for unused variables and I have no idea how to avoid it, so here's a trick
+        placeholder = 0;
+    }
 }
 
 
