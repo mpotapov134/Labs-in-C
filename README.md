@@ -10,7 +10,7 @@
 | lab3-1 (qsort) | Dec  7 | 5  | Nov 14,19 |       |
 | lab4   | Dec 21 |       |          |          |
 | lab5   | May 15 |       |          |          |
-| lab6-0 | Feb 26 |       |          |          |
+| lab6-0 | Feb 26 | 4     | Mar 1    |          |
 | lab6-1 | Feb 26 |       |          |          |
 | lab6-2 | Feb 26 |       |          |          |
 | lab7   | Mar 12 |       |          |          |
