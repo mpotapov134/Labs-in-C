@@ -2,185 +2,156 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+
 #define VAR 'v'
-/*Test 33 fails with message "munmap_chunk(): invalid pointer".
-  I've read online that it happens because of trying to free the memory
-  that was not allocated by malloc. I suspect it happens due to the way
-  Pop() is implemented here. What could be wrong and how do I fix it? Thank you.*/
+// test 33 fails with error munmap_chunk(): invalid pointer and I don't see what's wrong
 
 typedef struct Stack {
     int value;
     struct Stack* next;
 } TStack;
 
+TStack* Push(TStack* stack, int value) {
+    TStack* newNode = (TStack*) malloc(sizeof(TStack));
+    newNode->value = value;
+    newNode->next = stack;
+    return newNode;
+}
+
+TStack* Pop(TStack* stack, int* poppedValue) { // assert stack is not NULL
+    TStack* head = stack;
+    if (poppedValue) *poppedValue = stack->value; // record the value only when needed
+    stack = stack->next;
+    free(head);
+    return stack;
+}
+
+int Peep(TStack* stack) {
+    return stack ? stack->value : 0;
+}
+
+void Delete(TStack* stack) {
+    while (stack) {
+        stack = Pop(stack, NULL);
+    }
+}
 
 int IsOperator(char symbol) {
     return (symbol == '+' || symbol == '-' || symbol == '*' || symbol == '/');
 }
 
-
-int Priority(char opeation) {
-    if (opeation == '+' || opeation == '-') {
-        return 1;
-    }
-    if (opeation == '*' || opeation == '/') {
-        return 2;
-    }
-    return 0; // 0 for brackets
+int Priority(int symbol) {
+    // 1 for + and -, 2 for * and /, 0 for parentheses
+    return IsOperator(symbol) ? (symbol == '+' || symbol == '-' ? 1 : 2) : 0;
 }
 
+int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // return 1 on success, 0 on failure
+    if (!strlen(inputLine)) return 0;
 
-TStack* CreateStack(int value) {
-    TStack* newStack = (TStack*) malloc(sizeof(TStack));
-    newStack->value = value;
-    newStack->next = NULL;
-    return newStack;
-}
-
-
-void Push(TStack** stack, int value) {
-    TStack* newHead = CreateStack(value);
-    newHead->next = *stack;
-    *stack = newHead;
-}
-
-
-int Pop(TStack** stack) {
-    TStack* headToRemove = *stack;
-    *stack = (*stack)->next;
-    int poppedValue = headToRemove->value;
-    free(headToRemove);
-    return poppedValue;
-}
-
-
-int GetTopValue(TStack* stack) {
-    if (!stack) {
-        return 0;
-    }
-    return stack->value;
-}
-
-
-void DeleteStack(TStack* stack) {
-    int placeholder = 0;
-    while (stack) {
-        placeholder = Pop(&stack);
-    }
-    if (placeholder) { // gitlab punishes for unused variables and I have no idea how to avoid it, so here's a trick
-        placeholder = 0;
-    }
-}
-
-
-char* CreateBackwardsPolish(char* inputLine, int* numbersArray) {
-    if (!strlen(inputLine)) {
-        return NULL;
-    }
-    char* backwardsPolish = (char*) malloc(sizeof(*inputLine));
-    backwardsPolish[0] = 0;
-    char symbol, poppedOperator, placeholder = VAR;
-    int currentNum = 0, indexOfLast = 0;
     TStack* opStack = NULL;
+
+    char prevIsNumber = 0;
+    char symbol, poppedOperator, marker = VAR;
+    int currentNum = 0, indexOfLast = 0;
 
     for (unsigned i = 0; i < strlen(inputLine); ++i) {
         symbol = inputLine[i];
+
+        if (!isdigit(symbol) && !IsOperator(symbol) && symbol != '(' && symbol != ')') { // invalid character
+            Delete(opStack);
+            return 0;
+        }
+
         if (isdigit(symbol)) {
-            if (i != 0 && inputLine[i - 1] == ')') {
-                DeleteStack(opStack);
-                return NULL; // error: number goes right after a closing bracket
-            }
             currentNum = currentNum * 10 + atoi(&symbol);
+            prevIsNumber = 1;
         }
 
         else {
-            if (!IsOperator(symbol) && symbol != '(' && symbol != ')') {
-                return NULL; // incorrect input, can't make a proper BP notation
-            }
-
-            if (i != 0 && isdigit(inputLine[i - 1])) { // if we had a number before a non-number, we should add it to the notation
-                strncat(backwardsPolish, &placeholder, 1); // add a marker that a variable is there
-                numbersArray[indexOfLast++] = currentNum;
+            if (prevIsNumber) {
+                marker = 'v'; // for some reason marker just resets to empty after a few iterations
+                backwardsPolish = strncat(backwardsPolish, &marker, 1); // add a marker that a variable is there
+                numbersArray[indexOfLast++] = currentNum; // and store the number in a separate list
                 currentNum = 0;
+                prevIsNumber = 0;
             }
 
             if (IsOperator(symbol)) {
-                while (opStack && Priority((char) GetTopValue(opStack)) >= Priority(symbol)) {
-                    poppedOperator = (char) Pop(&opStack);
-                    strncat(backwardsPolish, &poppedOperator, 1);
+                while (opStack && Priority(Peep(opStack)) >= Priority(symbol)) {
+                    opStack = Pop(opStack, (int*) &poppedOperator);
+                    backwardsPolish = strncat(backwardsPolish, &poppedOperator, 1);
                 }
-                Push(&opStack, symbol);
+                opStack = Push(opStack, symbol);
             }
 
             else if (symbol == '(') {
-                if (i != 0 && (isdigit(inputLine[i - 1]) || inputLine[i - 1] == ')')) {
-                    DeleteStack(opStack);
-                    return NULL; // error: opening bracket can't go after a number or a closing bracket
-                }
-                Push(&opStack, symbol);
+                opStack = Push(opStack, symbol);
             }
 
             else { // come across ')'
-                if (i != 0 && inputLine[i - 1] == '(') {
-                    DeleteStack(opStack);
-                    return NULL; // error: nothing inside brackets
+                if (i != 0 && inputLine[i - 1] == '(') { // error: nothing inside brackets
+                    Delete(opStack);
+                    return 0;
                 }
 
-                while (opStack && GetTopValue(opStack) != '(') {
-                    poppedOperator = (char) Pop(&opStack);
-                    strncat(backwardsPolish, &poppedOperator, 1);
+                while (opStack && Peep(opStack) != '(') {
+                    opStack = Pop(opStack, (int*) &poppedOperator);
+                    backwardsPolish = strncat(backwardsPolish, &poppedOperator, 1);
                 }
 
-                if (!opStack) {
-                    return NULL; // error: didn't encounter an opening bracket
+                if (!opStack) { // error: didn't encounter an opening bracket
+                    return 0;
                 }
-                poppedOperator = Pop(&opStack); // pops the remaining opening bracket
+                opStack = Pop(opStack, NULL); // pops the remaining opening bracket
             }
         }
     }
 
-    if (isdigit(inputLine[strlen(inputLine) - 1])) { // add the last number to the notation
-        strncat(backwardsPolish, &placeholder, 1);
+    if (prevIsNumber) { // add the last number to the notation
+        marker = 'v';
+        backwardsPolish = strncat(backwardsPolish, &marker, 1);
         numbersArray[indexOfLast++] = currentNum;
-        currentNum = 0;
     }
 
-    while (opStack) { // add the operators to the result while there are any
-        poppedOperator = Pop(&opStack);
-        if (!IsOperator(poppedOperator)) {
-            DeleteStack(opStack);
-            return NULL; // in the end the operations stack should only have operators, and not brackets
+    while (opStack) { // add the remaining operators to the result
+        opStack = Pop(opStack, (int*) &poppedOperator);
+
+        if (!IsOperator(poppedOperator)) { // errror: unused parentheses left
+            Delete(opStack);
+            return 0;
         }
-        strncat(backwardsPolish, &poppedOperator, 1);
-    } // by the end of the cycle the stack is already empty, so there is no need to delete it
-    return backwardsPolish;
+
+        backwardsPolish = strncat(backwardsPolish, &poppedOperator, 1);
+    }
+
+    return 1;
 }
 
-
-int* Calculate(char* backwardsPolish, int* numbersArray) {
+int Calculate(char* backwardsPolish, int* numbersArray, int* finalRes) { // return 1 on success, 0 on failure
     TStack* numStack = NULL;
+
     char symbol;
     int indexOfLast = 0, a, b, res;
-    int* finalRes = (int*) malloc(sizeof(int));
 
     for (unsigned i = 0; i < strlen(backwardsPolish); ++i) {
         symbol = backwardsPolish[i];
-        if (symbol == VAR) {
-            Push(&numStack, numbersArray[indexOfLast++]);
-        }
+
+        if (symbol == VAR) numStack = Push(numStack, numbersArray[indexOfLast++]);
 
         else {
             if (!numStack) {
                 printf("syntax error\n");
-                return NULL;
+                Delete(numStack);
+                return 0;
             }
-            b = Pop(&numStack);
+            numStack = Pop(numStack, &b);
 
             if (!numStack) {
                 printf("syntax error\n");
-                return NULL;
+                Delete(numStack);
+                return 0;
             }
-            a = Pop(&numStack);
+            numStack = Pop(numStack, &a);
 
             if (symbol == '+') {
                 res = a + b;
@@ -194,21 +165,21 @@ int* Calculate(char* backwardsPolish, int* numbersArray) {
             else {
                 if (b == 0) {
                     printf("division by zero\n");
-                    return NULL;
+                    Delete(numStack);
+                    return 0;
                 }
                 res = a / b;
             }
-            Push(&numStack, res);
+            numStack = Push(numStack, res);
         }
     }
-    res = Pop(&numStack);
-    *finalRes = res;
-    return finalRes;
+
+    numStack = Pop(numStack, finalRes);
+    return 1;
 }
 
-
-int main(void) {
-    char inputLine[1003];
+int main() {
+    char inputLine[1002];
     if (!fgets(inputLine, sizeof(inputLine), stdin)) {
         printf("syntax error\n");
         exit(0);
@@ -216,20 +187,19 @@ int main(void) {
     *strchr(inputLine, '\n') = 0;
 
     int* numbersArray = (int*) malloc(sizeof(inputLine) * sizeof(int));
-    char* backwardsPolish = CreateBackwardsPolish(inputLine, numbersArray);
-    if (!backwardsPolish) { // realised that the input is incorrect while making the BP notation
+    char* backwardsPolish = (char*) malloc(sizeof(*inputLine));
+
+    if (!CreateBP(inputLine, numbersArray, backwardsPolish)) {
         printf("syntax error\n");
         free(numbersArray);
         free(backwardsPolish);
         exit(0);
     }
 
-
-    int* result = Calculate(backwardsPolish, numbersArray);
-    if (result) {
-        printf("%i\n", *result);
+    int answer;
+    if (Calculate(backwardsPolish, numbersArray, &answer)) {
+        printf("%i\n", answer);
     }
-    free(result);
     free(numbersArray);
     free(backwardsPolish);
 }
