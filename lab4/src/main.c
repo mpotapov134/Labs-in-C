@@ -131,11 +131,10 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
 int Calculate(char* backwardsPolish, int* numbersArray, int* finalRes) { // return 1 on success, 0 on failure
     TStack* numStack = NULL;
 
-    char symbol;
     int indexOfLast = 0, a, b, res;
 
     for (unsigned i = 0; i < strlen(backwardsPolish); ++i) {
-        symbol = backwardsPolish[i];
+        char symbol = backwardsPolish[i];
 
         if (symbol == VAR) numStack = Push(numStack, numbersArray[indexOfLast++]);
 
