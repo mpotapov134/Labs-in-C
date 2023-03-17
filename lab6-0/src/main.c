@@ -56,9 +56,9 @@ Tree* Balance(Tree* root) {
     return root;
 }
 
-Tree* Insert(Tree* originalStart, Tree* tree, int value, int treeArrayIndex) {
+Tree* Insert(Tree* tree, int value, Tree* originalStart) {
     if (!tree) {
-        Tree* newNode = &originalStart[treeArrayIndex];
+        Tree* newNode = originalStart;
         newNode->value = value;
         newNode->height = 1;
         newNode->left = NULL;
@@ -66,10 +66,10 @@ Tree* Insert(Tree* originalStart, Tree* tree, int value, int treeArrayIndex) {
         return newNode;
     }
     if (value < tree->value) {
-        tree->left = Insert(originalStart, tree->left, value, treeArrayIndex);
+        tree->left = Insert(tree->left, value, originalStart);
     }
     else {
-        tree->right = Insert(originalStart, tree->right, value, treeArrayIndex);
+        tree->right = Insert(tree->right, value, originalStart);
     }
     tree = Balance(tree);
     return tree;
@@ -83,7 +83,7 @@ int main(void) {
 
     for (int i = 0; i < n; ++i) {
         if (!scanf("%i", &value)) exit(0);
-        tree = Insert(originalStart, tree, value, i);
+        tree = Insert(tree, value, &originalStart[i]);
     }
     printf("%u\n", Height(tree));
     free(originalStart);
