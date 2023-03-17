@@ -51,7 +51,8 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
     TStack* opStack = NULL;
 
     char prevIsNumber = 0;
-    char symbol, poppedOperator, marker = VAR;
+    int poppedOperator;
+    char symbol, marker = VAR;
     int currentNum = 0, indexOfLast = 0;
 
     for (unsigned i = 0; i < strlen(inputLine); ++i) {
@@ -78,8 +79,8 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
 
             if (IsOperator(symbol)) {
                 while (opStack && Priority(Peep(opStack)) >= Priority(symbol)) {
-                    opStack = Pop(opStack, (int*) &poppedOperator);
-                    backwardsPolish = strncat(backwardsPolish, &poppedOperator, 1);
+                    opStack = Pop(opStack, &poppedOperator);
+                    backwardsPolish = strncat(backwardsPolish, (char*) &poppedOperator, 1);
                 }
                 opStack = Push(opStack, symbol);
             }
@@ -95,8 +96,8 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
                 }
 
                 while (opStack && Peep(opStack) != '(') {
-                    opStack = Pop(opStack, (int*) &poppedOperator);
-                    backwardsPolish = strncat(backwardsPolish, &poppedOperator, 1);
+                    opStack = Pop(opStack, &poppedOperator);
+                    backwardsPolish = strncat(backwardsPolish, (char*) &poppedOperator, 1);
                 }
 
                 if (!opStack) { // error: didn't encounter an opening bracket
@@ -109,19 +110,19 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
 
     if (prevIsNumber) { // add the last number to the notation
         marker = 'v';
-        backwardsPolish = strncat(backwardsPolish, &marker, 1);
+        backwardsPolish = strncat(backwardsPolish, (char*) &marker, 1);
         numbersArray[indexOfLast++] = currentNum;
     }
 
     while (opStack) { // add the remaining operators to the result
-        opStack = Pop(opStack, (int*) &poppedOperator);
+        opStack = Pop(opStack, &poppedOperator);
 
         if (!IsOperator(poppedOperator)) { // errror: unused parentheses left
             Delete(opStack);
             return 0;
         }
 
-        backwardsPolish = strncat(backwardsPolish, &poppedOperator, 1);
+        backwardsPolish = strncat(backwardsPolish, (char*) &poppedOperator, 1);
     }
 
     return 1;
