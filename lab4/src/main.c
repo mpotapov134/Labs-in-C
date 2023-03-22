@@ -66,7 +66,7 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
         }
 
         if (isdigit(symbol)) {
-            currentNum = currentNum * 10 + atoi(&symbol);
+            currentNum = currentNum * 10 + (symbol - '0');
             prevIsNumber = 1;
         }
 
