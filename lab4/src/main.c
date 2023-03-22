@@ -4,33 +4,33 @@
 #include <ctype.h>
 
 #define VAR 'v'
-// test 33 fails with error munmap_chunk(): invalid pointer and I don't see what's wrong
+#define MAX_LEN 1000
 
 typedef struct Stack {
     int value;
     struct Stack* next;
-} TStack;
+} Stack_t;
 
-TStack* Push(TStack* stack, int value) {
-    TStack* newNode = (TStack*) malloc(sizeof(TStack));
+Stack_t* Push(Stack_t* stack, int value) {
+    Stack_t* newNode = malloc(sizeof(Stack_t));
     newNode->value = value;
     newNode->next = stack;
     return newNode;
 }
 
-TStack* Pop(TStack* stack, int* poppedValue) { // assert stack is not NULL
-    TStack* head = stack;
+Stack_t* Pop(Stack_t* stack, int* poppedValue) { // assert stack is not NULL
+    Stack_t* head = stack;
     if (poppedValue) *poppedValue = stack->value; // record the value only when needed
     stack = stack->next;
     free(head);
     return stack;
 }
 
-int Peep(TStack* stack) {
+int Peek(Stack_t* stack) {
     return stack ? stack->value : 0;
 }
 
-void Delete(TStack* stack) {
+void Delete(Stack_t* stack) {
     while (stack) {
         stack = Pop(stack, NULL);
     }
@@ -42,21 +42,23 @@ int IsOperator(char symbol) {
 
 int Priority(int symbol) {
     // 1 for + and -, 2 for * and /, 0 for parentheses
-    return IsOperator(symbol) ? (symbol == '+' || symbol == '-' ? 1 : 2) : 0;
+    if (IsOperator(symbol)) {
+        if (symbol == '+' || symbol == '-') return 1;
+        else return 2;
+    }
+    else return 0;
 }
 
 int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // return 1 on success, 0 on failure
     if (!strlen(inputLine)) return 0;
 
-    TStack* opStack = NULL;
+    Stack_t* opStack = NULL;
 
-    char prevIsNumber = 0;
-    int poppedOperator;
-    char symbol, marker = VAR;
-    int currentNum = 0, indexOfLast = 0;
+    int poppedOperator, currentNum = 0, indexOfLast = 0;;
+    char prevIsNumber = 0, marker = VAR;
 
     for (unsigned i = 0; i < strlen(inputLine); ++i) {
-        symbol = inputLine[i];
+        char symbol = inputLine[i];
 
         if (!isdigit(symbol) && !IsOperator(symbol) && symbol != '(' && symbol != ')') { // invalid character
             Delete(opStack);
@@ -70,7 +72,6 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
 
         else {
             if (prevIsNumber) {
-                marker = 'v'; // for some reason marker just resets to empty after a few iterations
                 backwardsPolish = strncat(backwardsPolish, &marker, 1); // add a marker that a variable is there
                 numbersArray[indexOfLast++] = currentNum; // and store the number in a separate list
                 currentNum = 0;
@@ -78,7 +79,7 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
             }
 
             if (IsOperator(symbol)) {
-                while (opStack && Priority(Peep(opStack)) >= Priority(symbol)) {
+                while (opStack && Priority(Peek(opStack)) >= Priority(symbol)) {
                     opStack = Pop(opStack, &poppedOperator);
                     backwardsPolish = strncat(backwardsPolish, (char*) &poppedOperator, 1);
                 }
@@ -95,7 +96,7 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
                     return 0;
                 }
 
-                while (opStack && Peep(opStack) != '(') {
+                while (opStack && Peek(opStack) != '(') {
                     opStack = Pop(opStack, &poppedOperator);
                     backwardsPolish = strncat(backwardsPolish, (char*) &poppedOperator, 1);
                 }
@@ -109,7 +110,6 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
     }
 
     if (prevIsNumber) { // add the last number to the notation
-        marker = 'v';
         backwardsPolish = strncat(backwardsPolish, (char*) &marker, 1);
         numbersArray[indexOfLast++] = currentNum;
     }
@@ -129,9 +129,9 @@ int CreateBP(char* inputLine, int* numbersArray, char* backwardsPolish) { // ret
 }
 
 int Calculate(char* backwardsPolish, int* numbersArray, int* finalRes) { // return 1 on success, 0 on failure
-    TStack* numStack = NULL;
+    Stack_t* numStack = NULL;
 
-    int indexOfLast = 0, a, b, res;
+    int indexOfLast = 0, first, second, res;
 
     for (unsigned i = 0; i < strlen(backwardsPolish); ++i) {
         char symbol = backwardsPolish[i];
@@ -141,53 +141,51 @@ int Calculate(char* backwardsPolish, int* numbersArray, int* finalRes) { // retu
         else {
             if (!numStack) {
                 printf("syntax error\n");
-                Delete(numStack);
                 return 0;
             }
-            numStack = Pop(numStack, &b);
+            numStack = Pop(numStack, &second);
 
             if (!numStack) {
                 printf("syntax error\n");
-                Delete(numStack);
                 return 0;
             }
-            numStack = Pop(numStack, &a);
+            numStack = Pop(numStack, &first);
 
-            if (symbol == '+') {
-                res = a + b;
-            }
-            else if (symbol == '-') {
-                res = a - b;
-            }
-            else if (symbol == '*') {
-                res = a * b;
-            }
+            if (symbol == '+') res = first + second;
+
+            else if (symbol == '-') res = first - second;
+
+            else if (symbol == '*') res = first * second;
+
             else {
-                if (b == 0) {
+                if (second == 0) {
                     printf("division by zero\n");
                     Delete(numStack);
                     return 0;
                 }
-                res = a / b;
+                res = first / second;
             }
             numStack = Push(numStack, res);
         }
     }
 
     numStack = Pop(numStack, finalRes);
+    Delete(numStack);
     return 1;
 }
 
 int main() {
-    char inputLine[1002];
-    if (!fgets(inputLine, sizeof(inputLine), stdin)) {
+    char inputLine[MAX_LEN + 2]; // MAX_LEN for the string itself + 1 for a potential \n + 1 for the terminating 0
+    if (!fgets(inputLine, MAX_LEN + 2, stdin)) {
         printf("syntax error\n");
         exit(0);
     }
-    *strchr(inputLine, '\n') = 0;
+    char* newlineSymbPointer = strchr(inputLine, '\n');
+    if (newlineSymbPointer) *newlineSymbPointer = 0;
 
-    int* numbersArray = (int*) malloc(sizeof(inputLine) * sizeof(int));
-    char* backwardsPolish = (char*) malloc(sizeof(*inputLine));
+    int* numbersArray = malloc(sizeof(inputLine) * sizeof(int));
+    char* backwardsPolish = malloc(sizeof(inputLine));
+    backwardsPolish[0] = 0;
 
     if (!CreateBP(inputLine, numbersArray, backwardsPolish)) {
         printf("syntax error\n");
