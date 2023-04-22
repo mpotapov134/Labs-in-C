@@ -40,7 +40,7 @@ static int AllocInit(LinearAllocator_t* allocator, size_t size) {
 }
 
 static void* Allocate(LinearAllocator_t* allocator, size_t reqSize) {
-    void* pointerToAllocated = allocator->basePointer + allocator->offset;
+    void* pointerToAllocated = (char*) allocator->basePointer + allocator->offset;
     allocator->offset += reqSize;
     return pointerToAllocated;
 }
