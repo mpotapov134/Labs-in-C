@@ -2,184 +2,143 @@
 #include <stdio.h>
 
 #define MAX_NUMBER 2000
+#define OUT_OF_MEMORY -1
 
-enum ExitCodes {
-    SUCCESS = 100,
-    BAD_NUMBER_OF_LINES = 101,
-    BAD_NUMBER_OF_Vertices,
-    BAD_NUMBER_OF_EDGES,
-    BAD_VERTEX,
-    IMPOSSIBLE_TO_SORT,
-    OUT_OF_MEMORY,
-};
+typedef struct ResultStack {
+    int buffer[MAX_NUMBER];
+    int stackSize;
+} Stack_t;
 
-/* Структура односвязного списка вершин, в которые есть ребро из данной вершины */
-typedef struct VertexList {
-    int vertex;
-    struct VertexList* next;
-} VertexList_t;
+typedef struct Graph {
+    char adjacencyMatrix[MAX_NUMBER][MAX_NUMBER];
+    Stack_t* result;
+} Graph_t;
 
-/* Структура вершины графа */
-typedef struct Vertex {
-    int vertex;
-    VertexList_t* listOfAdjacent;
-} Vertex_t;
+void Push(Stack_t* stack, int vertex) {
+    stack->buffer[stack->stackSize] = vertex;
+    stack->stackSize++;
+}
 
-typedef struct LinearAllocator {
-    void *basePointer;
-    size_t offset;
-} LinearAllocator_t;
+int Pop(Stack_t* stack) {
+    int res = stack->buffer[stack->stackSize - 1];
+    stack->stackSize--;
+    return res;
+}
 
-static int AllocInit(LinearAllocator_t* allocator, size_t size) {
-    allocator->basePointer = malloc(size);
-    if (!allocator->basePointer) {
-        return OUT_OF_MEMORY;
+Graph_t* InitializeGraph() {
+    Graph_t* graph = calloc(1, sizeof(Graph_t));
+    if (!graph) {
+        return NULL;
     }
-    allocator->offset = 0;
-    return SUCCESS;
+    graph->result = calloc(1, sizeof(Stack_t));
+    if (!graph->result) {
+        free(graph);
+        return NULL;
+    }
+    return graph;
 }
 
-static void* Allocate(LinearAllocator_t* allocator, size_t reqSize) {
-    void* pointerToAllocated = (char*) allocator->basePointer + allocator->offset;
-    allocator->offset += reqSize;
-    return pointerToAllocated;
+void FreeGraph(Graph_t* graph) {
+    free(graph->result);
+    free(graph);
 }
 
-static void FreeAll(LinearAllocator_t* allocator) {
-    free(allocator->basePointer);
-}
-
-/* Читает входные данные и создает граф */
-int Initialize(int* numOfVertices, int* numOfEdges, Vertex_t graph[MAX_NUMBER]) {
-    int scanReturn = scanf("%i", numOfVertices);
-    if (scanReturn != 1) {
+/* Читает входные данные и выполняет проверку */
+int Initialize(int* numOfVertices, int* numOfEdges) {
+    if (scanf("%i", numOfVertices) != 1) {
         printf("bad number of lines\n");
-        return BAD_NUMBER_OF_LINES;
+        return 0;
     }
     if (*numOfVertices < 0 || *numOfVertices > MAX_NUMBER) {
         printf("bad number of vertices\n");
-        return BAD_NUMBER_OF_Vertices;
+        return 0;
     }
 
-    scanReturn = scanf("%i", numOfEdges);
-    if (scanReturn != 1) {
+    if (scanf("%i", numOfEdges) != 1) {
         printf("bad number of lines\n");
-        return BAD_NUMBER_OF_LINES;
+        return 0;
     }
     if (*numOfEdges < 0 || *numOfEdges > *numOfVertices * (*numOfVertices + 1) / 2) {
         printf("bad number of edges\n");
-        return BAD_NUMBER_OF_EDGES;
+        return 0;
     }
-
-    for (int i = 0; i < *numOfVertices; ++i) {
-        graph[i].vertex = i + 1;
-        graph[i].listOfAdjacent = NULL;
-    }
-    return SUCCESS;
+    return 1;
 }
 
-/* Читает данные о ребрах графа и заполняет списки смежности для вершин графа */
-int CreateEdges(int numOfVertices, int numOfEdges, Vertex_t graph[MAX_NUMBER], LinearAllocator_t* allocator) {
+/* Читает данные о ребрах графа и заполняет матрицу смежности */
+int CreateEdges(int numOfVertices, int numOfEdges, char adjacencyMatrix[][MAX_NUMBER]) {
     for (int edge = 0; edge < numOfEdges; ++edge) {
         int start, end;
-        int scanReturn = scanf("%i%i", &start, &end);
-        if (scanReturn != 2) {
+        if (scanf("%i%i", &start, &end) != 2) {
             printf("bad number of lines\n");
-            return BAD_NUMBER_OF_LINES;
+            return 0;
         }
 
         if (start < 1 || start > numOfVertices || end < 1 || end > numOfVertices) {
             printf("bad vertex\n");
-            return BAD_VERTEX;
+            return 0;
         }
 
-        /* Создаем новый элемент в списке связанных вершин */
-        VertexList_t* newAdjacent = Allocate(allocator, sizeof(*newAdjacent));
-        newAdjacent->vertex = end;
-        newAdjacent->next = graph[start - 1].listOfAdjacent;
-        graph[start - 1].listOfAdjacent = newAdjacent;
+        adjacencyMatrix[start - 1][end - 1] = 1;
     }
-    return SUCCESS;
+    return 1;
 }
 
-/* Выполняет топологическую сортировку */
-int Sort(int numOfVertices, Vertex_t graph[MAX_NUMBER], int result[MAX_NUMBER]) {
-    char state[MAX_NUMBER]; // Состояния вершин графа
-    for (int i = 0; i < numOfVertices; ++i) {
-        state[i] = 'N';
+int DFS(Graph_t* graph, char state[], int numOfVertices, int start) {
+    if (state[start] == 'D') { // dead-end
+        return 1;
     }
-
-    for (int i = 0; i < numOfVertices; ++i) {
-        /* Восстанавливаем ранее вычеркнутые вершины */
-        for (int vertex = 0; vertex < numOfVertices; ++vertex) {
-            if (state[vertex] == 'S') {
-                state[vertex] = 'N';
+    if (state[start] == 'M') { // visited before
+        return 0; // impossible
+    }
+    state[start] = 'M'; // marked
+    for (int end = 0; end < numOfVertices; ++end) {
+        if (graph->adjacencyMatrix[start][end]) {
+            if (!DFS(graph, state, numOfVertices, end)) {
+                return 0; // impossible
             }
-        }
-
-        /* Вычеркиваем все вершины, в которые есть дуга */
-        for (int vertexIndex = 0; vertexIndex < numOfVertices; ++vertexIndex) {
-            VertexList_t* currentAdjacent = graph[vertexIndex].listOfAdjacent;
-            while(currentAdjacent) {
-                if (state[currentAdjacent->vertex - 1] == 'N') {
-                    state[currentAdjacent->vertex - 1] = 'S';
-                }
-                currentAdjacent = currentAdjacent->next;
-            }
-        }
-
-        char found = 0; // Флаг, по которому будем определять, нашлась ли не вычекнутая вершина
-        /* Ищем первую не вычеркнутую вершину, записываем ее в ответ и удаляем все исходящие из нее дуги */
-        for (int vertex = 0; vertex < numOfVertices; ++vertex) {
-            if (state[vertex] == 'N') {
-                found = 1;
-                result[i] = vertex + 1;
-                state[vertex] = 'D';
-                graph[vertex].listOfAdjacent = NULL;
-                break;
-            }
-        }
-
-        /* Не вычеркнутая вершина не нашлась */
-        if (!found) {
-            printf("impossible to sort\n");
-            return IMPOSSIBLE_TO_SORT;
         }
     }
-    return SUCCESS;
+    state[start] = 'D'; // deleted
+    Push(graph->result, start + 1);
+    return 1;
 }
 
-int main(void) {
+int main() {
     int numOfVertices, numOfEdges;
-    struct Vertex graph[MAX_NUMBER];
-    int result[MAX_NUMBER];
-
-    int returnCode = Initialize(&numOfVertices, &numOfEdges, graph);
-    if (returnCode != SUCCESS) {
-        exit(0);
+    if (!Initialize(&numOfVertices, &numOfEdges)) {
+        exit(EXIT_SUCCESS);
     }
 
-    LinearAllocator_t allocator;
-    returnCode = AllocInit(&allocator, sizeof(VertexList_t) * numOfEdges);
-    if (returnCode != SUCCESS) {
-        exit(0);
+    Graph_t* graph = InitializeGraph();
+    if (!graph) {
+        exit(OUT_OF_MEMORY);
     }
 
-    returnCode = CreateEdges(numOfVertices, numOfEdges, graph, &allocator);
-    if (returnCode != SUCCESS) {
-        FreeAll(&allocator);
-        exit(0);
+    if (!CreateEdges(numOfVertices, numOfEdges, graph->adjacencyMatrix)) {
+        FreeGraph(graph);
+        exit(EXIT_SUCCESS);
     }
 
-    returnCode = Sort(numOfVertices, graph, result);
-    if (returnCode != SUCCESS) {
-        FreeAll(&allocator);
-        exit(0);
+    char state[MAX_NUMBER];
+    for (int i = 0; i < numOfVertices; ++i) {
+        state[i] = 'U'; // unmarked
     }
 
     for (int i = 0; i < numOfVertices; ++i) {
-        printf("%i ", result[i]);
+        if (state[i] == 'U') {
+            if (!DFS(graph, state, numOfVertices, i)) {
+                printf("impossible to sort\n");
+                FreeGraph(graph);
+                exit(EXIT_SUCCESS);
+            }
+        }
+    }
+
+    while (graph->result->stackSize > 0) {
+        printf("%i ", Pop(graph->result));
     }
     printf("\n");
-    FreeAll(&allocator);
+
+    FreeGraph(graph);
 }
