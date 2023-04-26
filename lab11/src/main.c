@@ -1,11 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
-#define MAX(a, b) (a >= b) ? a : b
+#define MAX(a, b) ((a) >= (b)) ? (a) : (b)
 
-void PrintItemsInfo(int totalSize, int count, int size, int weights[], int prices[], int costMatrix[][totalSize + 1]) { // totalSize is only used to define the matrix size
-    if (!costMatrix[count][size]) return;
+enum ExitCodes {
+    INPUT_ERROR = 101,
+    OUT_OF_MEMORY,
+};
 
-    if (costMatrix[count][size] == costMatrix[count - 1][size]) { // сумма осталась та же, значит, элемент с номером count не положили
+void PrintItemsInfo(int totalSize, int count, int size, const int* weights, const int* prices, const int* costMatrix) {
+    if (!costMatrix[count * (totalSize + 1) + size]) {
+        return;
+    }
+
+    if (costMatrix[count * (totalSize + 1) + size] ==
+        costMatrix[(count - 1) * (totalSize + 1) + size]) { // сумма осталась та же, значит, элемент с номером count не положили
         PrintItemsInfo(totalSize, count - 1, size, weights, prices, costMatrix);
     }
     else {
@@ -14,33 +22,60 @@ void PrintItemsInfo(int totalSize, int count, int size, int weights[], int price
     }
 }
 
-void CalcMaxCost(int totalNumber, int totalSize, int weights[], int prices[], int costMatrix[][totalSize + 1]) {
-    for (int i = 0; i <= totalNumber; ++i) costMatrix[i][0] = 0; // если вместимость == 0, итоговая стоимость будет == 0
-    for (int i = 0; i <= totalSize; ++i) costMatrix[0][i] = 0; // если можно положить 0 первых предметов, итоговая стоимость будет == 0
+void CalcMaxCost(int totalNumber, int totalSize, const int* weights, const int* prices, int* costMatrix) {
+    for (int i = 0; i <= totalNumber; ++i) {
+        costMatrix[i * (totalSize + 1)] = 0; // если вместимость == 0, итоговая стоимость будет == 0
+    }
+    for (int i = 0; i <= totalSize; ++i) {
+        costMatrix[i] = 0; // если можно положить 0 первых предметов, итоговая стоимость будет == 0
+    }
 
     for (int count = 1; count <= totalNumber; ++count) {
         for (int size = 1; size <= totalSize; ++size) {
             if (size >= weights[count - 1]) {
-                costMatrix[count][size] = MAX(costMatrix[count - 1][size], costMatrix[count - 1][size - weights[count - 1]] + prices[count - 1]);
+                costMatrix[count * (totalSize + 1) + size] = MAX(
+                    costMatrix[(count - 1) * (totalSize + 1) + size],
+                    costMatrix[(count - 1) * (totalSize + 1) + (size - weights[count - 1])] + prices[count - 1]
+                );
             }
-            else costMatrix[count][size] = costMatrix[count - 1][size];
+            else costMatrix[count * (totalSize + 1) + size] = costMatrix[(count - 1) * (totalSize + 1) + size];
         }
     }
 }
 
 int main(void) {
     int totalNumber, totalSize;
-    if (2 != scanf("%i %i", &totalNumber, &totalSize)) exit(0);
-
-    int weights[totalNumber], prices[totalNumber];
-    for (int i = 0; i < totalNumber; ++i) {
-        if (2 != scanf("%i %i", &weights[i], &prices[i])) exit(0);
+    if (scanf("%i %i", &totalNumber, &totalSize) != 2) {
+        exit(INPUT_ERROR);
     }
 
-    int costMatrix[totalNumber + 1][totalSize + 1];
+    int* weights = calloc(totalNumber, sizeof(int));
+    int* prices = calloc(totalNumber, sizeof(int));
+    if (!weights || !prices) {
+        free(weights);
+        exit(OUT_OF_MEMORY);
+    }
+
+    for (int i = 0; i < totalNumber; ++i) {
+        if (scanf("%i %i", &weights[i], &prices[i]) != 2) {
+            free(weights);
+            free(prices);
+            exit(INPUT_ERROR);
+        }
+    }
+
+    int* costMatrix = calloc((totalNumber + 1) * (totalSize + 1), sizeof(int));
+    if (!costMatrix) {
+        free(weights);
+        free(prices);
+        exit(OUT_OF_MEMORY);
+    }
     CalcMaxCost(totalNumber, totalSize, weights, prices, costMatrix);
 
-    printf("%i\n", costMatrix[totalNumber][totalSize]);
+    printf("%i\n", costMatrix[totalNumber * (totalSize + 1) + totalSize]);
 
     PrintItemsInfo(totalSize, totalNumber, totalSize, weights, prices, costMatrix);
+    free(weights);
+    free(prices);
+    free(costMatrix);
 }
