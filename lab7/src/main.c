@@ -2,16 +2,30 @@
 #include <stdio.h>
 
 #define MAX_NUMBER 2000
-#define OUT_OF_MEMORY -1
 
-typedef struct ResultStack {
-    int buffer[MAX_NUMBER];
-    int stackSize;
+enum ReturnCodes {
+    OUT_OF_MEMORY = 1,
+    BAD_NUMBER_OF_LINES,
+    BAD_NUMBER_OF_VERTICES,
+    BAD_NUMBER_OF_EDGES,
+    BAD_VERTEX,
+    IMPOSSIBLE_TO_SORT,
+};
+
+enum VertexStates {
+    UNMARKED = 1,
+    MARKED,
+    DELETED,
+};
+
+typedef struct Stack {
+    int* buffer;
+    int stackSize; // Индекс первой свободной ячейки;
 } Stack_t;
 
 typedef struct Graph {
-    char adjacencyMatrix[MAX_NUMBER][MAX_NUMBER];
-    Stack_t* result;
+    char* adjacencyMatrix;
+    int numOfVertices;
 } Graph_t;
 
 void Push(Stack_t* stack, int vertex) {
@@ -20,125 +34,145 @@ void Push(Stack_t* stack, int vertex) {
 }
 
 int Pop(Stack_t* stack) {
-    int res = stack->buffer[stack->stackSize - 1];
+    int popped = stack->buffer[stack->stackSize - 1];
     stack->stackSize--;
-    return res;
+    return popped;
 }
 
-Graph_t* InitializeGraph() {
-    Graph_t* graph = calloc(1, sizeof(Graph_t));
-    if (!graph) {
-        return NULL;
-    }
-    graph->result = calloc(1, sizeof(Stack_t));
-    if (!graph->result) {
-        free(graph);
+Graph_t* InitializeGraph(Graph_t* graph, int numOfVertices) {
+    graph->numOfVertices = numOfVertices;
+    graph->adjacencyMatrix = calloc(numOfVertices * numOfVertices, sizeof(*graph->adjacencyMatrix));
+    if (!graph->adjacencyMatrix) {
         return NULL;
     }
     return graph;
 }
 
+Stack_t* InitializeStack(Stack_t* stack, int bufferSize) {
+    stack->stackSize = 0;
+    stack->buffer = calloc(bufferSize, sizeof(*stack->buffer));
+    if (!stack->buffer) {
+        return NULL;
+    }
+    return stack;
+}
+
 void FreeGraph(Graph_t* graph) {
-    free(graph->result);
-    free(graph);
+    free(graph->adjacencyMatrix);
+}
+
+void FreeStack(Stack_t* stack) {
+    free(stack->buffer);
 }
 
 /* Читает входные данные и выполняет проверку */
-int Initialize(int* numOfVertices, int* numOfEdges) {
-    if (scanf("%i", numOfVertices) != 1) {
+int ReadSize(int* numOfVertices, int* numOfEdges) {
+    if (scanf("%i %i", numOfVertices, numOfEdges) != 2) {
         printf("bad number of lines\n");
-        return 0;
+        return BAD_NUMBER_OF_LINES;
     }
     if (*numOfVertices < 0 || *numOfVertices > MAX_NUMBER) {
         printf("bad number of vertices\n");
-        return 0;
-    }
-
-    if (scanf("%i", numOfEdges) != 1) {
-        printf("bad number of lines\n");
-        return 0;
+        return BAD_NUMBER_OF_VERTICES;
     }
     if (*numOfEdges < 0 || *numOfEdges > *numOfVertices * (*numOfVertices + 1) / 2) {
         printf("bad number of edges\n");
-        return 0;
+        return BAD_NUMBER_OF_EDGES;
     }
-    return 1;
+    return EXIT_SUCCESS;
 }
 
 /* Читает данные о ребрах графа и заполняет матрицу смежности */
-int CreateEdges(int numOfVertices, int numOfEdges, char adjacencyMatrix[][MAX_NUMBER]) {
-    for (int edge = 0; edge < numOfEdges; ++edge) {
+int CreateEdges(char* adjacencyMatrix, int numOfVertices, int numOfEdges) {
+    for (int i = 0; i < numOfEdges; ++i) {
         int start, end;
-        if (scanf("%i%i", &start, &end) != 2) {
+        if (scanf("%i %i", &start, &end) != 2) {
             printf("bad number of lines\n");
-            return 0;
+            return BAD_NUMBER_OF_LINES;
         }
 
         if (start < 1 || start > numOfVertices || end < 1 || end > numOfVertices) {
             printf("bad vertex\n");
-            return 0;
+            return BAD_VERTEX;
         }
 
-        adjacencyMatrix[start - 1][end - 1] = 1;
+        adjacencyMatrix[(start - 1) * numOfVertices + (end - 1)] = 1;
     }
-    return 1;
+    return EXIT_SUCCESS;
 }
 
-int DFS(Graph_t* graph, char state[], int numOfVertices, int start) {
-    if (state[start] == 'D') { // dead-end
-        return 1;
+int DepthFirstSearch(Graph_t* graph, char* state, int start, Stack_t* sortedVertices) {
+    if (state[start] == DELETED) { // Данную вершину уже рассматривали
+        return EXIT_SUCCESS;
     }
-    if (state[start] == 'M') { // visited before
-        return 0; // impossible
+    if (state[start] == MARKED) { // Вершина уже помечена, значит, есть цикл
+        return IMPOSSIBLE_TO_SORT;
     }
-    state[start] = 'M'; // marked
+    state[start] = MARKED; // Помечаем вершину, в которой находимся
+    int numOfVertices = graph->numOfVertices;
     for (int end = 0; end < numOfVertices; ++end) {
-        if (graph->adjacencyMatrix[start][end]) {
-            if (!DFS(graph, state, numOfVertices, end)) {
-                return 0; // impossible
+        /* Проходим по всем вершинам, в которые есть ребро из данной, и запускаем поиск из них */
+        if (graph->adjacencyMatrix[start * numOfVertices + end]) {
+            if (DepthFirstSearch(graph, state, end, sortedVertices) == IMPOSSIBLE_TO_SORT) {
+                return IMPOSSIBLE_TO_SORT;
             }
         }
     }
-    state[start] = 'D'; // deleted
-    Push(graph->result, start + 1);
-    return 1;
+    state[start] = DELETED; // Закончили рассмотрение данной вершины
+    Push(sortedVertices, start + 1);
+    return EXIT_SUCCESS;
 }
 
 int main() {
     int numOfVertices, numOfEdges;
-    if (!Initialize(&numOfVertices, &numOfEdges)) {
-        exit(EXIT_SUCCESS);
+    if (ReadSize(&numOfVertices, &numOfEdges) != EXIT_SUCCESS) {
+        return EXIT_SUCCESS;
     }
 
-    Graph_t* graph = InitializeGraph();
-    if (!graph) {
-        exit(OUT_OF_MEMORY);
+    Graph_t graph;
+    if (!InitializeGraph(&graph, numOfVertices)) {
+        return OUT_OF_MEMORY;
     }
 
-    if (!CreateEdges(numOfVertices, numOfEdges, graph->adjacencyMatrix)) {
-        FreeGraph(graph);
-        exit(EXIT_SUCCESS);
+    if (CreateEdges(graph.adjacencyMatrix, numOfVertices, numOfEdges) != EXIT_SUCCESS) {
+        FreeGraph(&graph);
+        return EXIT_SUCCESS;
     }
 
-    char state[MAX_NUMBER];
+    Stack_t sortedVertices;
+    if (!InitializeStack(&sortedVertices, numOfVertices)) {
+        FreeGraph(&graph);
+        return OUT_OF_MEMORY;
+    }
+
+    char* state = calloc(numOfVertices, sizeof(char));
+    if (!state) {
+        FreeGraph(&graph);
+        FreeStack(&sortedVertices);
+        return OUT_OF_MEMORY;
+    }
     for (int i = 0; i < numOfVertices; ++i) {
-        state[i] = 'U'; // unmarked
+        state[i] = UNMARKED; // Изначально все вершины не помечены
     }
 
-    for (int i = 0; i < numOfVertices; ++i) {
-        if (state[i] == 'U') {
-            if (!DFS(graph, state, numOfVertices, i)) {
+    for (int start = 0; start < numOfVertices; ++start) {
+        if (state[start] == UNMARKED) {
+            if (DepthFirstSearch(&graph, state, start, &sortedVertices) == IMPOSSIBLE_TO_SORT) {
                 printf("impossible to sort\n");
-                FreeGraph(graph);
-                exit(EXIT_SUCCESS);
+                FreeGraph(&graph);
+                FreeStack(&sortedVertices);
+                free(state);
+                return EXIT_SUCCESS;
             }
         }
     }
 
-    while (graph->result->stackSize > 0) {
-        printf("%i ", Pop(graph->result));
+    while (sortedVertices.stackSize > 0) {
+        printf("%i ", Pop(&sortedVertices));
     }
     printf("\n");
 
-    FreeGraph(graph);
+    FreeGraph(&graph);
+    FreeStack(&sortedVertices);
+    free(state);
 }
