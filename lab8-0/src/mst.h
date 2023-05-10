@@ -1,3 +1,6 @@
+#ifndef MST_H_INCLUDED
+#define MST_H_INCLUDED
+
 typedef struct Edge { // Структура ребра графа
     int start;
     int end;
@@ -14,3 +17,5 @@ void FreeMST(MST_t* mst);
 MST_t* InitializeMST(MST_t* mst, int numOfVertices);
 
 void AddToMST(MST_t* minSpanningTree, Edge_t edge);
+
+#endif
