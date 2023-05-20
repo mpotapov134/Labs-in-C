@@ -70,7 +70,7 @@ static int IsAdjacent(const Graph_t* graph, int v1, int v2) {
 }
 
 static int BelongsToQueue(const Queue_t* queue, int vertex) {
-    return queue->distance[vertex] == NOT_IN_QUEUE ? 0 : 1;
+    return queue->distance[vertex] == (unsigned) NOT_IN_QUEUE ? 0 : 1;
 }
 
 int Prims(const Graph_t* graph, Queue_t* queue, MST_t* minSpanningTree) {
@@ -79,7 +79,7 @@ int Prims(const Graph_t* graph, Queue_t* queue, MST_t* minSpanningTree) {
     while (queue->queueSize) {
         for (int dest = 0; dest < graph->numOfVertices; ++dest) {
             if (IsAdjacent(graph, closestVertex, dest) && BelongsToQueue(queue, dest)) {
-                int edgeLen = graph->adjacencyMatrix[closestVertex * graph->numOfVertices + dest];
+                unsigned edgeLen = graph->adjacencyMatrix[closestVertex * graph->numOfVertices + dest];
                 if (edgeLen < queue->distance[dest]) {
                     queue->distance[dest] = edgeLen;
                     queue->parent[dest] = closestVertex;
