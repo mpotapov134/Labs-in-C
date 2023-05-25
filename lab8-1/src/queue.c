@@ -28,7 +28,7 @@ int ExtractMin(Queue_t* queue) {
     int indexOfMin;
     for (int i = 0; i < queue->bufferSize; ++i) {
         unsigned int distance = queue->distance[i];
-        if (distance == (unsigned) NOT_IN_QUEUE) {
+        if (distance == NOT_IN_QUEUE) {
             continue;
         }
         if (distance < minDistance) {
@@ -36,10 +36,14 @@ int ExtractMin(Queue_t* queue) {
             indexOfMin = i;
         }
     }
-    if (minDistance == (unsigned) INFINITY) {
+    if (minDistance == INFINITY) {
         return NO_MINIMAL;
     }
     queue->distance[indexOfMin] = NOT_IN_QUEUE;
     queue->queueSize--;
     return indexOfMin;
+}
+
+int BelongsToQueue(const Queue_t* queue, int vertex) {
+    return queue->distance[vertex] == NOT_IN_QUEUE ? 0 : 1;
 }

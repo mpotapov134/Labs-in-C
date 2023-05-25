@@ -17,4 +17,6 @@ MST_t* InitializeMST(MST_t* minSpanningTree, int numOfVertices);
 
 void AddToMST(MST_t* minSpanningTree, int parent, int vertex);
 
+void PrintMST(const MST_t* minSpanningTree);
+
 #endif
