@@ -18,14 +18,14 @@ Vertices_t* InitializeVertices(Vertices_t* vertices, int numOfVertices) {
         return NULL;
     }
     for (int i = 0; i < numOfVertices; ++i) {
-        vertices->distance[i] = (unsigned) INFINITY;
+        vertices->distance[i] = INFINITY;
         vertices->state[i] = NOT_VISITED;
     }
     return vertices;
 }
 
 int ExtractMin(Vertices_t* vertices) {
-    unsigned long long minDistance = INFINITY;
+    uint64_t minDistance = INFINITY;
     int minVertex = 0;
     for (int i = 0; i < vertices->bufferSize; ++i) {
         if (vertices->state[i] == NOT_VISITED && vertices->distance[i] < minDistance) {
@@ -33,7 +33,7 @@ int ExtractMin(Vertices_t* vertices) {
             minVertex = i;
         }
     }
-    if (minDistance == (unsigned) INFINITY) {
+    if (minDistance == INFINITY) {
         return NO_MIN;
     }
     return minVertex;

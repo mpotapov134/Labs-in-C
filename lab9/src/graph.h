@@ -12,4 +12,6 @@ void FreeGraph(Graph_t* graph);
 
 Graph_t* InitializeGraph(Graph_t* graph, int numOfVertices);
 
+int IsAdjacent(const Graph_t* graph, int edgeStart, int edgeEnd);
+
 #endif

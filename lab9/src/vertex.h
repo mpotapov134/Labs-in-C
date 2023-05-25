@@ -1,8 +1,11 @@
 #ifndef VERTEX_H_INCLUDED
 #define VERTEX_H_INCLUDED
 
-#define INFINITY -1
-#define NO_MIN -2
+#include <limits.h>
+#include <stdint.h>
+
+#define INFINITY UINT_MAX
+#define NO_MIN -1
 
 enum VertexState {
     VISITED = 1,
@@ -10,7 +13,7 @@ enum VertexState {
 };
 
 typedef struct VerticesQueue {
-    unsigned long long* distance; // Минимальное расстояние от этой вершины до старта
+    uint64_t* distance; // Минимальное расстояние от этой вершины до старта
     char* state; // Состояние вершины: уже посещена или еще нет
     int bufferSize;
     int queueSize;

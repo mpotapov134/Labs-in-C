@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(lab9 C)
 
-set(SRC src/main.c src/graph.c src/vertex.c)
+set(SRC src/main.c src/graph.c src/vertex.c src/dijkstra.c)
 
 add_executable(${PROJECT_NAME} ${SRC})
 

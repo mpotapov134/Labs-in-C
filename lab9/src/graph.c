@@ -19,3 +19,8 @@ Graph_t* InitializeGraph(Graph_t* graph, int numOfVertices) {
     }
     return graph;
 }
+
+int IsAdjacent(const Graph_t* graph, int edgeStart, int edgeEnd) {
+    int edgeLen = graph->adjacencyMatrix[edgeStart * graph->numOfVertices + edgeEnd];
+    return edgeLen == NO_EDGE ? 0 : 1;
+}
